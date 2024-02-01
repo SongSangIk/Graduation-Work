@@ -1,0 +1,28 @@
+import tensorflow as tf
+
+# 1. MNIST로부터 데이터셋 불러오기
+mnist = tf.keras.datasets.mnist
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# 2. 숫자 필기 이미지 데이터의 범위 지정
+x_train, x_test = x_train/255.0, x_test/255.0
+
+# 3. 모델 구성
+model = tf.keras.models.Sequential([
+  tf.keras.layers.Flatten(input_shape=(28, 28)),
+  tf.keras.layers.Dense(512, activation=tf.nn.relu),
+  # 총 4개의 레이어, 1번째 레이어는 입력 이미지의 크기가 28x28이므로 이를 1차원 텐서로 확장, 2번째 레이어는 1번째 레이어에서 제공되는 784개의 값(28x28)을 입력받아 128개의 값으로 인코딩하는데, 활성함수로 ReLU를 사용.
+  tf.keras.layers.Dense(10, activation=tf.nn.softmax)
+  # softmax 이용 시, 출력값 간의 편차 확대로 분류가 용이해짐
+])
+
+# 4. 모델 컴파일
+model.compile(optimizer='adam',
+            loss='sparse_categorical_crossentropy',
+            metrics=['accuracy'])
+
+# 5. 훈련 데이터셋을 이용하여 모델을 5번 반복하여 훈련
+model.fit(x_train, y_train, epochs=5)
+
+# 6. 모델 저장
+model.save('model1.h5')

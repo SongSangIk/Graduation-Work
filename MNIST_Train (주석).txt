@@ -1,0 +1,98 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+import keras
+
+from keras.datasets import mnist
+from keras.utils import np_utils
+
+from keras.models import Sequential
+from keras.layers import Dense, Conv2D, MaxPool2D, Flatten, Dropout
+
+## Get the data and pre-process it
+## 데이터 로드 및 전처리
+
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+X_train.shape , y_train.shape , X_test.shape , y_test.shape
+
+def plot_input_img(i):
+	plt.imshow(X_train[i] , cmap= 'binary' )
+	plt.title(y_train[i])
+	plt.show()
+
+for i in range(10):
+	plot_input_img(i)
+
+# Pre Process the images
+# 이미지 전처리 과정
+
+# Nomalizing the image to [0,1] range
+# [0,1] 범위로 이미지 표준화
+X_train = X_train.astype(np.float32)/255
+X_test = X_test.astype(np.float32)/255
+
+# REshape / expand the dimensions of images to (28,28,1)
+# REshape / 이미지 매트릭스를 (28,28,1)로 확장
+X_train = np.expand_dims(X_train, -1)
+X_test = np.expand_dims(X_test, -1)
+
+# convert classes to one hot vectors
+
+y_train = keras.utils.np_utils.to_categorical(y_train)
+
+y_test = keras.utils.np_utils.to_categorical(y_test)
+
+model = Sequential()
+
+model.add(Conv2D(32, (3,3), input_shape = (28,28,1) , activation= 'relu') )
+model.add(MaxPool2D((2,2)))
+
+model.add(Conv2D(64, (3,3) , activation= 'relu') )
+model.add(MaxPool2D((2,2)))
+
+model.add(Flatten())
+
+model.add(Dropout(0.25))
+
+model.add(Dense(10, activation="softmax"))
+
+model.summary()
+
+model.compile(optimizer= 'adam', loss = keras.losses.categorical_crossentropy , metrics=['accuracy'] )
+
+# Callbacks
+# EarlyStopping, ModelCheckpoint import 하기 위한 호출
+
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+
+# Earlystopping
+# EarlyStopping class 
+# monitor='val_acc' (Validation Accuracy *유효 적중률 모니터링)
+# min_delta= 0.01 (improvement로 판별할 최소 값)
+# patience= 4 (학습을 멈추기 위한 improvement가 없는 Epoch들의 최소 값)
+# verbose= 1 (verbosity 모드)
+
+es = EarlyStopping(monitor='val_acc' , min_delta= 0.01, patience= 4, verbose= 1)
+
+# Model Check Point
+# ModelCheckpoint class
+# "./bestmodel.h5" (모델 파일 저장 경로)
+# monitor= "val_acc"
+# verbose= 1 (verbosity 모드, 0 혹은 1)
+
+mc = ModelCheckpoint("./bestmodel.h5", monitor= "val_acc", verbose= 1, save_best_only= True)
+
+cb = [es,mc]
+
+# Model Training
+# 모델 학습
+# 
+
+his = model.fit(X_train, y_train, epochs= 50, validation_split= 0.3 )
+
+model_S = keras.models.load_model("E: //python_project//Python Projects//bestmodel.h5")
+
+score = model_S.evaluate(X_test, y_test)
+
+print(f" the model accuracy is {score[1]} ")
